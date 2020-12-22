@@ -13,14 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package app.cash.paparazzi
+package app.cash.paparazzi.accessibility
 
-import android.view.View
-import java.awt.image.BufferedImage
+import java.awt.Color
 
-/**
- * An extension for overlaying additional information on top of each rendered frame.
- */
-interface RenderExtension {
-  fun render(snapshot: Snapshot, view: View, image: BufferedImage): BufferedImage
+data class RenderSettings(
+  val renderAlpha: Int = DEFAULT_RENDER_ALPHA,
+  val renderColors: List<Color> = Colors.DEFAULT_COLORS,
+  val textColor: Color = Color.BLACK,
+  val descriptionBackgroundColor: Color = Color.WHITE,
+  val textSize: Float = 30f,
+  val colorRectSize: Int = 50
+) {
+
+  fun validate() {
+    if (renderAlpha < 0 || renderAlpha > 255) {
+      throw IllegalArgumentException("renderAlpha should be between 0 and 255")
+    }
+  }
+
+  companion object {
+    const val DEFAULT_RENDER_ALPHA = 40
+  }
 }

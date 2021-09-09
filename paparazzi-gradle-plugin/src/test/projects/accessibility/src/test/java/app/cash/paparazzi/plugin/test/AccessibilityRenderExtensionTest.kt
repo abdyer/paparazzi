@@ -61,6 +61,6 @@ class AccessibilityRenderExtensionTest {
       })
     }
 
-    paparazzi.snapshot(root)
+    paparazzi.snapshot(root, "accessibility")
   }
 }

@@ -30,6 +30,19 @@ dependencies {
   }
 }
 
+def generateRClass = tasks.register("generateRClass") {
+  doLast {
+    File rFile = new File(projectDir, "src/test/java/app/cash/paparazzi/R.kt")
+    rFile.createNewFile()
+    rFile.withWriter('utf-8') { writer ->
+      writer.writeLine("package app.cash.paparazzi")
+      writer.writeLine("")
+      writer.writeLine("/** Simulate an empty R.java for this package. */")
+      writer.writeLine("class R")
+    }
+  }
+}
+
 def generateTestConfig = tasks.register("generateTestConfig") {
   def resources = "$buildDir/intermediates/paparazzi/resources.txt"
   outputs.file(resources)
@@ -44,16 +57,12 @@ def generateTestConfig = tasks.register("generateTestConfig") {
       writer.writeLine(".")
       writer.writeLine(configurations.unzip.singleFile.path)
     }
+  }
+}
 
-    File rFile = new File(projectDir, "src/test/java/app/cash/paparazzi/R.kt")
-    rFile.createNewFile()
-    rFile.withWriter('utf-8') { writer ->
-      writer.writeLine("package app.cash.paparazzi")
-      writer.writeLine("")
-      writer.writeLine("/** Simulate an empty R.java for this package. */")
-      writer.writeLine("class R")
-    }
-    rFile.deleteOnExit()
+tasks.configureEach {
+  if (name.contains("compileTestKotlin")) {
+    dependsOn(generateRClass)
   }
 }
 
@@ -63,8 +72,6 @@ tasks.withType(Test).configureEach {
       "paparazzi.test.resources",
       generateTestConfig.map { it.outputs.files.singleFile }.get().path
   )
-  System.out.println(projectDir)
-  System.out.println(it)
 
   testLogging {
     events 'passed', 'failed', 'skipped', 'standardOut', 'standardError'
@@ -73,5 +80,8 @@ tasks.withType(Test).configureEach {
     showExceptions true
     showStackTraces true
     showStandardStreams true
+  }
+  doLast {
+    delete files("$projectDir/src/test/java/app/cash/paparazzi/R.kt")
   }
 }

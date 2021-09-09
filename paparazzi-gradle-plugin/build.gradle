@@ -49,6 +49,7 @@ tasks.named('compileKotlin').configure {
 test {
   dependsOn(':paparazzi:publishMavenPublicationToProjectLocalMavenRepository')
   dependsOn(':paparazzi-agent:publishMavenPublicationToProjectLocalMavenRepository')
+  dependsOn(':paparazzi-accessibility:publishMavenPublicationToProjectLocalMavenRepository')
 
   testLogging {
     events 'passed', 'failed', 'skipped'

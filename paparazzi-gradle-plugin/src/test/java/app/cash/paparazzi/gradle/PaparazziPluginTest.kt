@@ -1,5 +1,6 @@
 package app.cash.paparazzi.gradle
 
+import app.cash.paparazzi.VERSION
 import app.cash.paparazzi.gradle.ImageSubject.Companion.assertThat
 import com.google.common.truth.Truth.assertThat
 import org.gradle.testkit.runner.BuildResult
@@ -703,6 +704,23 @@ class PaparazziPluginTest {
     assertThat(snapshotImage).isSimilarTo(goldenImage).withDefaultThreshold()
   }
 
+  @Test
+  fun accessibilityRenderExtension() {
+    val fixtureRoot = File("src/test/projects/accessibility")
+
+    gradleRunner
+            .withArguments("testDebug", "--stacktrace")
+            .runFixture(fixtureRoot) { build() }
+
+    val snapshotsDir = File(fixtureRoot, "build/reports/paparazzi/images")
+    val snapshots = snapshotsDir.listFiles()
+    assertThat(snapshots!!).hasLength(1)
+
+    val snapshotImage = snapshots[0]
+    val goldenImage = File(fixtureRoot, "src/test/resources/accessibility.png")
+    assertThat(snapshotImage).isSimilarTo(goldenImage).withDefaultThreshold()
+  }
+
   private fun GradleRunner.runFixture(
     projectRoot: File,
     moduleRoot: File = projectRoot,
@@ -726,8 +744,9 @@ class PaparazziPluginTest {
     val gradleProperties = File(projectRoot, "gradle.properties")
     if (!gradleProperties.exists()) {
       gradleProperties.createNewFile()
-      gradleProperties.writeText("android.useAndroidX=true")
-      gradleProperties.deleteOnExit()
+      gradleProperties.writeText("android.useAndroidX=true\n")
+      gradleProperties.appendText("paparazziVersion=$VERSION")
+      manifest.deleteOnExit()
     }
 
     return withProjectDir(projectRoot).action()

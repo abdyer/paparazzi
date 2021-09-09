@@ -31,29 +31,30 @@ internal object Colors {
       Color.PINK
   )
 
-  private var colorIndex = -1
   private val colorMap = mutableMapOf<View, Color>()
+  private var colorIndex = -1
 
-  private fun nextColor(): Color {
-    if (colorIndex + 1 > DEFAULT_COLORS.size - 1) {
+  private fun nextColor(renderSettings: RenderSettings): Color {
+    if (colorIndex + 1 > renderSettings.renderColors.size - 1) {
       colorIndex = 0
     } else {
       colorIndex++
     }
-    return DEFAULT_COLORS[colorIndex]
+    return renderSettings.renderColors[colorIndex]
   }
 
   fun getColor(
     view: View,
-    alpha: Int = 255,
-  ): Color =
-    colorMap.getOrElse(view) {
-      val color = nextColor().withAlpha(alpha)
-      colorMap[view] = color
-      return@getOrElse color
+    renderSettings: RenderSettings,
+  ): Color {
+    return colorMap.getOrElse(view) {
+      nextColor(renderSettings).withAlpha(renderSettings.renderAlpha).apply {
+        colorMap[view] = this
+      }
     }
+  }
 
   private fun Color.withAlpha(alpha: Int): Color {
-    return Color(red, blue, green, alpha)
+    return Color(red, green, blue, alpha)
   }
 }

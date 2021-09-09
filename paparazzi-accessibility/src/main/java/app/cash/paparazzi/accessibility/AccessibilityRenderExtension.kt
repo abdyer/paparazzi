@@ -60,7 +60,7 @@ class AccessibilityRenderExtension(private val renderSettings: RenderSettings = 
     accessibilityTree.forEachIndexed { index, view ->
       val drawStartY = (index * colorRectSize * 1.5f).toInt() + image.margin()
 
-      graphics.color = getColor(view, renderSettings.renderAlpha)
+      graphics.color = getColor(view = view, renderSettings = renderSettings)
       graphics.fillRoundRect(drawStartX, drawStartY, colorRectSize, colorRectSize,
           colorRectSize / 4, colorRectSize / 4)
       graphics.color = renderSettings.textColor
@@ -88,7 +88,7 @@ class AccessibilityRenderExtension(private val renderSettings: RenderSettings = 
 
     if (view.isImportantForAccessibility && !view.iterableTextForAccessibility.isNullOrBlank()) {
       accessibilityTree.add(view)
-      graphics.color = getColor(view = view, alpha = renderSettings.renderAlpha)
+      graphics.color = getColor(view = view, renderSettings = renderSettings)
       graphics.fillRect(location[0], location[1], view.width, view.height)
     }
 

@@ -6,21 +6,6 @@ apply plugin: 'com.vanniktech.maven.publish'
 sourceCompatibility = '1.8'
 targetCompatibility = '1.8'
 
-def artifactType = Attribute.of('artifactType', String)
-
-configurations {
-  unzip {
-    attributes.attribute(artifactType, ArtifactTypeDefinition.DIRECTORY_TYPE)
-  }
-}
-
-dependencies {
-  registerTransform(org.gradle.api.internal.artifacts.transform.UnzipTransform) {
-    from.attribute(artifactType, ArtifactTypeDefinition.JAR_TYPE)
-    to.attribute(artifactType, ArtifactTypeDefinition.DIRECTORY_TYPE)
-  }
-}
-
 dependencies {
   api deps.layoutlib.native.jdk11
   api deps.tools.common
@@ -38,15 +23,6 @@ dependencies {
   implementation deps.jcodec.core
   implementation deps.jcodec.javase
   implementation project(':paparazzi-agent')
-
-  def osName = System.getProperty("os.name").toLowerCase(Locale.US)
-  if (osName.startsWith("mac")) {
-    unzip deps.layoutlib.native.macOsX
-  } else if (osName.startsWith("windows")) {
-    unzip deps.layoutlib.native.windows
-  } else {
-    unzip deps.layoutlib.native.linux
-  }
 
   testImplementation deps.assertj
 }
@@ -67,35 +43,4 @@ tasks.named("dokkaGfm").configure {
   }
 }
 
-def generateTestConfig = tasks.register("generateTestConfig") {
-  def resources = "$buildDir/intermediates/paparazzi/resources.txt"
-  outputs.file(resources)
-
-  doLast {
-    File configFile = new File(resources)
-    configFile.withWriter('utf-8') { writer ->
-      writer.writeLine("app.cash.paparazzi")
-      writer.writeLine(".")
-      writer.writeLine("29")
-      writer.writeLine("platforms/android-29/")
-      writer.writeLine(".")
-      writer.writeLine(configurations.unzip.singleFile.path)
-    }
-  }
-}
-
-tasks.withType(Test).configureEach {
-  dependsOn(generateTestConfig)
-  systemProperty(
-      "paparazzi.test.resources",
-      generateTestConfig.map { it.outputs.files.singleFile }.get().path
-  )
-  testLogging {
-    events 'passed', 'failed', 'skipped', 'standardOut', 'standardError'
-    exceptionFormat 'FULL'
-    showCauses true
-    showExceptions true
-    showStackTraces true
-    showStandardStreams true
-  }
-}
+apply from: "../localPaparazzi.gradle"

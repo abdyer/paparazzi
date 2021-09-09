@@ -1,0 +1,77 @@
+
+// Creates necessary files and artifacts to run paparazzi directly without the need to depend on the gradle plugin.
+
+def artifactType = org.gradle.api.attributes.Attribute.of('artifactType', String)
+
+configurations {
+  unzip {
+    attributes.attribute(artifactType, org.
+        gradle.
+        api.
+        artifacts.
+        type.
+        ArtifactTypeDefinition.DIRECTORY_TYPE)
+  }
+}
+
+dependencies {
+  registerTransform(org.gradle.api.internal.artifacts.transform.UnzipTransform) {
+    from.attribute(artifactType, org.gradle.api.artifacts.type.ArtifactTypeDefinition.JAR_TYPE)
+    to.attribute(artifactType, org.gradle.api.artifacts.type.ArtifactTypeDefinition.DIRECTORY_TYPE)
+  }
+
+  def osName = System.getProperty("os.name").toLowerCase(Locale.US)
+  if (osName.startsWith("mac")) {
+    unzip deps.layoutlib.native.macOsX
+  } else if (osName.startsWith("windows")) {
+    unzip deps.layoutlib.native.windows
+  } else {
+    unzip deps.layoutlib.native.linux
+  }
+}
+
+def generateTestConfig = tasks.register("generateTestConfig") {
+  def resources = "$buildDir/intermediates/paparazzi/resources.txt"
+  outputs.file(resources)
+
+  doLast {
+    File configFile = new File(resources)
+    configFile.withWriter('utf-8') { writer ->
+      writer.writeLine("app.cash.paparazzi")
+      writer.writeLine(".")
+      writer.writeLine("29")
+      writer.writeLine("platforms/android-29/")
+      writer.writeLine(".")
+      writer.writeLine(configurations.unzip.singleFile.path)
+    }
+
+    File rFile = new File(projectDir, "src/test/java/app/cash/paparazzi/R.kt")
+    rFile.createNewFile()
+    rFile.withWriter('utf-8') { writer ->
+      writer.writeLine("package app.cash.paparazzi")
+      writer.writeLine("")
+      writer.writeLine("/** Simulate an empty R.java for this package. */")
+      writer.writeLine("class R")
+    }
+    rFile.deleteOnExit()
+  }
+}
+
+tasks.withType(Test).configureEach {
+  dependsOn(generateTestConfig)
+  systemProperty(
+      "paparazzi.test.resources",
+      generateTestConfig.map { it.outputs.files.singleFile }.get().path
+  )
+  System.out.println(projectDir)
+  System.out.println(it)
+
+  testLogging {
+    events 'passed', 'failed', 'skipped', 'standardOut', 'standardError'
+    exceptionFormat 'FULL'
+    showCauses true
+    showExceptions true
+    showStackTraces true
+    showStandardStreams true
+  }
+}

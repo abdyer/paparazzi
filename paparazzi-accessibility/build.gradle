@@ -6,5 +6,7 @@ dependencies {
   api project(':paparazzi')
 
   testImplementation deps.assertj
-  testImplementation project(':paparazzi')
+  testImplementation deps.testparameterinjector
 }
+
+apply from: "../localPaparazzi.gradle"

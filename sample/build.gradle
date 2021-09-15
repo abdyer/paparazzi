@@ -1,5 +1,6 @@
 apply plugin: 'com.android.library'
 apply plugin: 'org.jetbrains.kotlin.android'
+apply plugin: 'de.mannodermaus.android-junit5'
 apply plugin: 'app.cash.paparazzi'
 
 android {
@@ -11,4 +12,6 @@ android {
 
 dependencies {
   testImplementation deps.testparameterinjector
+  testImplementation deps.junit5.jupiter
+  testImplementation deps.junit5.vintageEngine
 }

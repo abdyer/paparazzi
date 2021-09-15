@@ -19,14 +19,14 @@ import android.animation.ObjectAnimator
 import android.view.View
 import android.widget.LinearLayout
 import android.widget.TextView
-import app.cash.paparazzi.PaparazziTestExtension
+import app.cash.paparazzi.Paparazzi
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
 
 class KeypadViewTestJUnit5 {
 
   @RegisterExtension
-  val paparazzi = PaparazziTestExtension()
+  val paparazzi = Paparazzi()
 
   @Test
   fun testViews() {

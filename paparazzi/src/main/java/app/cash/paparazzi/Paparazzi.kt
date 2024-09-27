@@ -48,6 +48,9 @@ import com.android.layoutlib.bridge.BridgeRenderSession
 import com.android.layoutlib.bridge.impl.RenderAction
 import com.android.layoutlib.bridge.impl.RenderSessionImpl
 import com.android.tools.layoutlib.java.System_Delegate
+import org.junit.jupiter.api.extension.AfterEachCallback
+import org.junit.jupiter.api.extension.BeforeEachCallback
+import org.junit.jupiter.api.extension.ExtensionContext
 import org.junit.rules.TestRule
 import org.junit.runner.Description
 import org.junit.runners.model.Statement
@@ -64,7 +67,7 @@ class Paparazzi(
   private val appCompatEnabled: Boolean = true,
   private val maxPercentDifference: Double = 0.1,
   private val snapshotHandler: SnapshotHandler = determineHandler(maxPercentDifference)
-) : TestRule {
+) : TestRule, BeforeEachCallback, AfterEachCallback {
   private val THUMBNAIL_SIZE = 1000
 
   private val logger = PaparazziLogger()
@@ -97,7 +100,7 @@ class Paparazzi(
   ): Statement {
     val statement = object : Statement() {
       override fun evaluate() {
-        prepare(description)
+        prepare(description.toTestName())
         try {
           base.evaluate()
         } finally {
@@ -114,13 +117,29 @@ class Paparazzi(
     return outerRule.apply(statement, description)
   }
 
-  fun prepare(description: Description) {
+  override fun beforeEach(context: ExtensionContext) {
+    registerFontLookupInterceptionIfResourceCompatDetected()
+    registerViewEditModeInterception()
+    registerMatrixMultiplyInterception()
+
+    InterceptorRegistrar.registerMethodInterceptors()
+
+    prepare(context.toTestName())
+  }
+
+  override fun afterEach(context: ExtensionContext) {
+    close()
+
+    InterceptorRegistrar.clearMethodInterceptors()
+  }
+
+  fun prepare(testName: TestName) {
     forcePlatformSdkVersion(environment.compileSdkVersion)
 
     val layoutlibCallback = PaparazziCallback(logger, environment.packageName)
     layoutlibCallback.initResources()
 
-    testName = description.toTestName()
+    this.testName = testName
 
     renderer = Renderer(environment, layoutlibCallback, logger, maxPercentDifference)
     sessionParamsBuilder = renderer.prepare()
@@ -315,6 +334,13 @@ class Paparazzi(
     val packageName = fullQualifiedName.substringBeforeLast('.', missingDelimiterValue = "")
     val className = fullQualifiedName.substringAfterLast('.')
     return TestName(packageName, className, methodName)
+  }
+
+  private fun ExtensionContext.toTestName(): TestName {
+    val fullQualifiedName = testClass.get().name
+    val packageName = fullQualifiedName.substringBeforeLast('.', missingDelimiterValue = "")
+    val className = fullQualifiedName.substringAfterLast('.')
+    return TestName(packageName, className, testMethod.get().name)
   }
 
   private fun forcePlatformSdkVersion(compileSdkVersion: Int) {
